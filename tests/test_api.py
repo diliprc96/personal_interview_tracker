@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import io
 
 import pytest
 from fastapi.testclient import TestClient
@@ -93,3 +94,63 @@ def test_next_interview_date_filters(client: TestClient):
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Soon"
+
+
+def test_export_candidates_csv(client: TestClient):
+    client.post("/api/candidates", json={"name": "Export Me", "position": "SRE"})
+
+    response = client.get("/api/candidates-export", params={"format": "csv"})
+    assert response.status_code == 200
+    assert "text/csv" in response.headers["content-type"]
+    assert "name,position" in response.text
+    assert "Export Me" in response.text
+
+
+def test_import_candidates_csv_with_case_insensitive_headers(client: TestClient):
+    existing = client.post("/api/candidates", json={"name": "Base", "position": "ML Engineer"}).json()
+    csv_content = (
+        "ID,Name,Position,PIPELINE_STAGE,action_required,priority,notes\n"
+        f"{existing['id']},Base Updated,ML Engineer,OFFERED,,HIGH,Offer in discussion\n"
+        ",New Person,Data Engineer,SCHEDULED,NONE,MEDIUM,Interview fixed\n"
+    )
+
+    response = client.post(
+        "/api/candidates-import",
+        files={"file": ("candidates.csv", io.BytesIO(csv_content.encode("utf-8")), "text/csv")},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["created"] == 1
+    assert payload["updated"] == 1
+
+    all_candidates = client.get("/api/candidates").json()
+    assert len(all_candidates) == 2
+    updated = [item for item in all_candidates if item["id"] == existing["id"]][0]
+    assert updated["name"] == "Base Updated"
+    assert updated["pipeline_stage"] == "OFFERED"
+    assert updated["action_required"] == "FOLLOW_UP"
+
+
+def test_import_rejects_unknown_columns(client: TestClient):
+    csv_content = "name,position,bad_column\nAlex,Platform Engineer,x\n"
+
+    response = client.post(
+        "/api/candidates-import",
+        files={"file": ("bad.csv", io.BytesIO(csv_content.encode("utf-8")), "text/csv")},
+    )
+
+    assert response.status_code == 400
+    assert "Unsupported columns" in response.json()["detail"]
+
+
+def test_clear_candidates_endpoint(client: TestClient):
+    client.post("/api/candidates", json={"name": "One", "position": "Platform Engineer"})
+    client.post("/api/candidates", json={"name": "Two", "position": "Platform Engineer"})
+
+    clear_response = client.post("/api/candidates-clear")
+    assert clear_response.status_code == 200
+    assert clear_response.json()["deleted"] == 2
+
+    candidates = client.get("/api/candidates").json()
+    assert candidates == []

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import case, select
+from sqlalchemy import case, delete, select
 from sqlalchemy.orm import Session
 
-from app.enums import ActionRequired, Priority
+from app.enums import ActionRequired, PipelineStage, Priority
 from app.models import Candidate
 from app.schemas import CandidateCreate, CandidateUpdate
 
@@ -21,6 +21,23 @@ def create_candidate(db: Session, payload: CandidateCreate) -> Candidate:
     db.commit()
     db.refresh(candidate)
     return candidate
+
+
+def apply_stage_defaults(candidate: Candidate, stage_was_updated: bool, action_was_updated: bool) -> None:
+    if not stage_was_updated:
+        return
+
+    stage = candidate.pipeline_stage
+    if stage == PipelineStage.TO_BE_SCHEDULED and not action_was_updated:
+        candidate.action_required = ActionRequired.SCHEDULE
+    elif stage == PipelineStage.SCHEDULED and candidate.next_interview_datetime and not action_was_updated:
+        candidate.action_required = ActionRequired.NONE
+    elif stage == PipelineStage.INTERVIEW_COMPLETED and not action_was_updated:
+        candidate.action_required = ActionRequired.DECIDE
+    elif stage in {PipelineStage.SELECTED, PipelineStage.OFFERED} and not action_was_updated:
+        candidate.action_required = ActionRequired.FOLLOW_UP
+    elif stage in {PipelineStage.JOINED, PipelineStage.REJECTED, PipelineStage.CANCELLED} and not action_was_updated:
+        candidate.action_required = ActionRequired.NONE
 
 
 def get_candidate(db: Session, candidate_id: int) -> Candidate | None:
@@ -81,9 +98,13 @@ def list_candidates(
 
 def update_candidate(db: Session, candidate: Candidate, payload: CandidateUpdate) -> Candidate:
     update_values = payload.model_dump(exclude_unset=True)
+    stage_was_updated = "pipeline_stage" in update_values
+    action_was_updated = "action_required" in update_values
 
     for field, value in update_values.items():
         setattr(candidate, field, value)
+
+    apply_stage_defaults(candidate, stage_was_updated=stage_was_updated, action_was_updated=action_was_updated)
 
     db.add(candidate)
     db.commit()
@@ -94,6 +115,12 @@ def update_candidate(db: Session, candidate: Candidate, payload: CandidateUpdate
 def delete_candidate(db: Session, candidate: Candidate) -> None:
     db.delete(candidate)
     db.commit()
+
+
+def clear_candidates(db: Session) -> int:
+    result = db.execute(delete(Candidate))
+    db.commit()
+    return int(result.rowcount or 0)
 
 
 def list_action_items(db: Session) -> list[Candidate]:

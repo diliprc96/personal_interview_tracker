@@ -20,8 +20,9 @@ A small, reliable web application for tracking candidates through an interview p
 - Main list with filters and sorting
 - Inline edits for stage, action required, and priority
 - Candidate detail editor for full updates
-- Action Items view (`action_required != NONE`)
-- Today / This Week view for interviews and expected joinings
+- Action Items view (`action_required != NONE`) with focused columns
+- Today / This Week view with planning-focused columns
+- Data operations from UI: export CSV, import CSV/XLSX, and clear all data
 - REST API with validation and explicit status codes
 
 ## Data Model
@@ -126,6 +127,9 @@ python seed_demo_data.py --force
 - `GET /api/action-items`
 - `GET /api/calendar`
 - `GET /api/metadata`
+- `GET /api/candidates-export`
+- `POST /api/candidates-import`
+- `POST /api/candidates-clear`
 
 Useful `GET /api/candidates` query params:
 - `position`

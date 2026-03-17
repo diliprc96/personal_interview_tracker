@@ -50,7 +50,35 @@
 
         <section id="control-center" class="panel view active">
             <h2>Candidate List</h2>
+            <div class="kpi-strip">
+                <div class="kpi-card">
+                    <p class="kpi-label">Total Candidates</p>
+                    <p id="kpi-total" class="kpi-value">0</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-label">Action Pending</p>
+                    <p id="kpi-action-pending" class="kpi-value">0</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-label">Interviews This Week</p>
+                    <p id="kpi-interviews-week" class="kpi-value">0</p>
+                </div>
+                <div class="kpi-card">
+                    <p class="kpi-label">Summary</p>
+                    <button type="button" id="refresh-kpi">Refresh KPIs</button>
+                </div>
+            </div>
+            <div class="inline-filters operations-row">
+                <button type="button" id="export-data">Export Data (CSV)</button>
+                <button type="button" id="import-data">Import Data (CSV/XLSX)</button>
+                <button type="button" id="clear-data" class="danger">Clear Data</button>
+                <input id="import-file" type="file" accept=".csv,.xlsx" class="hidden" />
+            </div>
             <form id="filters" class="inline-filters">
+                <label>
+                    Quick Search
+                    <input id="filter-search" type="text" placeholder="Name or position" />
+                </label>
                 <label>
                     Position
                     <select id="filter-position">

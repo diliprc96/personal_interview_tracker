@@ -5,9 +5,9 @@ from pydantic import ValidationError
 
 from app import crud
 from app.database import configure_database, get_session_factory, init_db
-from app.enums import ActionRequired, Priority
+from app.enums import ActionRequired, PipelineStage, Priority
 from app.models import Candidate
-from app.schemas import CandidateCreate
+from app.schemas import CandidateCreate, CandidateUpdate
 
 
 @pytest.fixture()
@@ -79,3 +79,31 @@ def test_filtering_by_action_and_date_range(db_session):
     )
     assert len(filtered_date) == 1
     assert filtered_date[0].name == "One"
+
+
+def test_stage_update_applies_simple_action_defaults(db_session):
+    candidate = Candidate(name="Nora", position="Data Scientist")
+    db_session.add(candidate)
+    db_session.commit()
+    db_session.refresh(candidate)
+
+    updated = crud.update_candidate(
+        db_session,
+        candidate,
+        CandidateUpdate(pipeline_stage=PipelineStage.INTERVIEW_COMPLETED),
+    )
+    assert updated.action_required == ActionRequired.DECIDE
+
+    updated = crud.update_candidate(
+        db_session,
+        updated,
+        CandidateUpdate(pipeline_stage=PipelineStage.OFFERED),
+    )
+    assert updated.action_required == ActionRequired.FOLLOW_UP
+
+    updated = crud.update_candidate(
+        db_session,
+        updated,
+        CandidateUpdate(pipeline_stage=PipelineStage.REJECTED),
+    )
+    assert updated.action_required == ActionRequired.NONE
