@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interview Tracker</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Interview Tracker</h1>
+            <p class="subtitle">Simple pipeline control center for technical screening.</p>
+        </header>
+
+        <section class="panel">
+            <h2>Add New Candidate</h2>
+            <form id="add-candidate-form" class="grid-form">
+                <label>
+                    Name
+                    <input id="new-name" name="name" type="text" required maxlength="120" />
+                </label>
+                <label>
+                    Position
+                    <input id="new-position" name="position" type="text" required maxlength="120" />
+                </label>
+                <label>
+                    Priority
+                    <select id="new-priority" name="priority"></select>
+                </label>
+                <label class="full-width">
+                    Notes
+                    <textarea id="new-notes" name="notes" rows="2" maxlength="4000"></textarea>
+                </label>
+                <div class="full-width">
+                    <button type="submit">Add Candidate</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <nav class="view-tabs">
+                <button class="tab-button active" data-view="control-center">Control Center</button>
+                <button class="tab-button" data-view="action-items">Action Items</button>
+                <button class="tab-button" data-view="calendar">Today / This Week</button>
+            </nav>
+        </section>
+
+        <section id="status" class="status" role="status" aria-live="polite"></section>
+
+        <section id="control-center" class="panel view active">
+            <h2>Candidate List</h2>
+            <form id="filters" class="inline-filters">
+                <label>
+                    Position
+                    <select id="filter-position">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Pipeline Stage
+                    <select id="filter-stage">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Action Required
+                    <select id="filter-action">
+                        <option value="">All</option>
+                    </select>
+                </label>
+                <label>
+                    Sort By
+                    <select id="sort-by">
+                        <option value="updated_at">Last Updated</option>
+                        <option value="priority">Priority</option>
+                        <option value="next_interview_datetime">Next Interview</option>
+                        <option value="expected_joining_date">Expected Joining</option>
+                        <option value="name">Name</option>
+                    </select>
+                </label>
+                <label>
+                    Order
+                    <select id="sort-order">
+                        <option value="desc">Descending</option>
+                        <option value="asc">Ascending</option>
+                    </select>
+                </label>
+            </form>
+
+            <div class="table-wrap">
+                <table id="candidate-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Pipeline Stage</th>
+                            <th>Action Required</th>
+                            <th>Priority</th>
+                            <th>Next Interview</th>
+                            <th>Expected Joining</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="action-items" class="panel view">
+            <h2>Action Items</h2>
+            <div id="action-items-content"></div>
+        </section>
+
+        <section id="calendar" class="panel view">
+            <h2>Today / This Week</h2>
+            <form class="inline-filters" id="calendar-controls">
+                <label>
+                    Window
+                    <select id="calendar-window">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                    </select>
+                </label>
+                <label>
+                    <input type="checkbox" id="include-joining" checked /> Include expected joinings
+                </label>
+            </form>
+            <h3>Interviews</h3>
+            <div id="calendar-interviews"></div>
+            <h3>Expected Joinings</h3>
+            <div id="calendar-joinings"></div>
+        </section>
+
+        <section class="panel" id="detail-panel">
+            <h2>Candidate Detail</h2>
+            <p id="detail-hint">Select a candidate from the list to edit details.</p>
+            <form id="detail-form" class="grid-form hidden">
+                <input id="detail-id" type="hidden" />
+                <label>
+                    Name
+                    <input id="detail-name" type="text" maxlength="120" required />
+                </label>
+                <label>
+                    Position
+                    <input id="detail-position" type="text" maxlength="120" required />
+                </label>
+                <label>
+                    Pipeline Stage
+                    <select id="detail-stage"></select>
+                </label>
+                <label>
+                    Action Required
+                    <select id="detail-action"></select>
+                </label>
+                <label>
+                    Priority
+                    <select id="detail-priority"></select>
+                </label>
+                <label>
+                    Current Round
+                    <input id="detail-round" type="text" maxlength="80" />
+                </label>
+                <label>
+                    Next Interview Date/Time
+                    <input id="detail-next-interview" type="datetime-local" />
+                </label>
+                <label>
+                    Expected Joining Date
+                    <input id="detail-joining-date" type="date" />
+                </label>
+                <label class="full-width">
+                    Notes
+                    <textarea id="detail-notes" rows="4" maxlength="4000"></textarea>
+                </label>
+                <p class="meta">Created at: <span id="detail-created"></span></p>
+                <p class="meta">Updated at: <span id="detail-updated"></span></p>
+                <div class="full-width detail-actions">
+                    <button type="submit">Save Changes</button>
+                    <button type="button" id="delete-candidate" class="danger">Delete Candidate</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
